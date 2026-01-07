@@ -90,25 +90,6 @@ class SoftFaceMaskTransform:
         return Image.fromarray(masked.astype(np.uint8))
 
 
-class PILToTensorNoNumpy:
-
-    def __call__(self, img: Image.Image) -> torch.Tensor:
-        if not isinstance(img, Image.Image):
-            raise TypeError(f"Expected PIL.Image.Image, got {type(img)!r}")
-
-        if img.mode not in ("L", "RGB"):
-            img = img.convert("RGB")
-
-        w, h = img.size
-        data = torch.ByteTensor(torch.ByteStorage.from_buffer(img.tobytes()))
-
-        if img.mode == "L":
-            tensor = data.view(h, w, 1).permute(2, 0, 1).contiguous()
-        else:
-            tensor = data.view(h, w, 3).permute(2, 0, 1).contiguous()
-
-        return tensor.float().div(255.0)
-
 
 transform = transforms.Compose(
     [
@@ -120,7 +101,7 @@ transform = transforms.Compose(
         transforms.RandomAdjustSharpness(sharpness_factor=0.5, p=1),
         transforms.RandomAffine(5, (0.02, 0.02), (0.95, 1.05)),
         transforms.RandomAutocontrast(p=1),
-        PILToTensorNoNumpy(),
+        transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.225]),
     ],
 )
